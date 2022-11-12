@@ -24,6 +24,11 @@ func (t TerminalDisplay) Clean() {
 	fmt.Print(ansiEscapeSeq)
 }
 
+func (t *TerminalDisplay) Done() {
+	t.i = 0
+	fmt.Println("")
+}
+
 func (t *TerminalDisplay) DrawAlive() {
 	if t.i > t.width*t.height {
 		log.Fatal("out of display")

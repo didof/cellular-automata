@@ -31,6 +31,7 @@ func (w World) Randomize(resetSeed bool) {
 
 func (w World) Display(d display.Display) {
 	d.Clean()
+	defer d.Done()
 	for _, row := range w {
 		for _, cell := range row {
 			switch {
