@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"syscall"
@@ -49,10 +50,16 @@ func (s *BrowserSimulationServer) AddTerminationSignals(signals ...interface{}) 
 	}()
 }
 
-func NewBrowserSimulationServer(host string, port uint, publicPath string, headless bool) BrowserSimulationServer {
+func NewBrowserSimulationServer(host string, port uint, publicPath string, HTMLfile string, headless bool) BrowserSimulationServer {
 	mux := http.NewServeMux()
 	mux.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir(publicPath))))
-	mux.HandleFunc("/", handleIndex)
+
+	templater := Templater{
+		publicPath: publicPath,
+		HTMLfile:   HTMLfile,
+	}
+
+	mux.HandleFunc("/", templater.Handle)
 
 	framer := Framer{
 		frame: "TODO",
@@ -73,13 +80,17 @@ func NewBrowserSimulationServer(host string, port uint, publicPath string, headl
 	}
 }
 
-func handleIndex(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles(*public + "/index.html")
-	if err != nil {
-		log.Fatal(err)
-	}
+type Templater struct {
+	publicPath string
+	HTMLfile   string
+}
 
-	t.Execute(w, nil)
+func (t *Templater) Handle(w http.ResponseWriter, r *http.Request) {
+	if tmpl, err := template.ParseFiles(filepath.Join(t.publicPath, t.HTMLfile)); err != nil {
+		log.Fatal(err)
+	} else {
+		tmpl.Execute(w, nil)
+	}
 }
 
 type Framer struct {

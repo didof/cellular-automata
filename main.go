@@ -9,9 +9,10 @@ import (
 	"syscall"
 )
 
-var public *string
+var public, HTMLfile *string
 var width, height, port *uint
 var headless *bool
+var ipp *float64
 
 func init() {
 	flag.Usage = usage
@@ -20,10 +21,12 @@ func init() {
 		log.Fatal(err)
 	}
 	public = flag.String("public", d+"/public", "path to public directory")
+	HTMLfile = flag.String("HTMLfile", "automatic.html", "HTML file name (with extention)")
 	port = flag.Uint("port", 7272, "the port where the simulation server starts")
 	headless = flag.Bool("headless", false, "whether to run an headless simulation")
 	width = flag.Uint("width", 10, "the width of the simulation world")
 	height = flag.Uint("height", 10, "the height of the simulation world")
+	ipp = flag.Float64("ipp", 0.1, "initial population percentage")
 	flag.Parse()
 }
 
@@ -35,12 +38,9 @@ func usage() {
 
 func main() {
 	sim := NewSimulation(int(*width), int(*height))
+	sim.Init(*ipp)
 
-	server := NewBrowserSimulationServer("0.0.0.0", *port, *public, *headless)
+	server := NewBrowserSimulationServer("0.0.0.0", *port, *public, *HTMLfile, *headless)
 	server.AddTerminationSignals(os.Interrupt, syscall.SIGTERM)
 	server.Serve(sim)
-}
-
-func Run(sim Simulation) {
-	sim.Init()
 }
