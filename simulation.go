@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -56,26 +57,35 @@ func (s *DefaultSimulation) Exit() <-chan struct{} {
 }
 
 func (s *DefaultSimulation) Process() {
+	var wg sync.WaitGroup
+
+	wg.Add(len(s.Units))
+
 	for index, unit := range s.Units {
-		neighbours := s.neighboursFinder.Find(index)
-		var ncount int
+		go func(index int, unit Cell) {
+			defer wg.Done()
+			neighbours := s.neighboursFinder.Find(index)
+			var ncount int
 
-		for _, neighbour := range neighbours {
-			if s.Units[neighbour].Alive() {
-				ncount++
+			for _, neighbour := range neighbours {
+				if s.Units[neighbour].Alive() {
+					ncount++
+				}
 			}
-		}
 
-		if unit.Alive() {
-			if ncount < 2 || ncount > 3 {
-				unit.Set(false)
+			if unit.Alive() {
+				if ncount < 2 || ncount > 3 {
+					unit.Set(false)
+				}
+			} else {
+				if ncount == 3 {
+					unit.Set(true)
+				}
 			}
-		} else {
-			if ncount == 3 {
-				unit.Set(true)
-			}
-		}
+		}(index, unit)
 	}
+
+	wg.Wait()
 }
 
 func (s *DefaultSimulation) Cells() []Cell {

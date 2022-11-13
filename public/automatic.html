@@ -18,6 +18,7 @@
             margin-inline: auto;
             width: 100%;
             height: 100%;
+            max-width: 860px;
         }
 
         .row {
@@ -32,6 +33,14 @@
             flex-grow: 1;
             aspect-ratio: 1 / 1;
         }
+
+        .cell.alive {
+            background-color: greenyellow;
+        }
+
+        .cell.dead {
+            background-color: transparent;
+        }
     </style>
 </head>
 
@@ -40,6 +49,7 @@
 
     <button onclick="next()">next</button>
     <button onclick="automatic()">automatic</button>
+    <button onclick="stop()">stop</button>
 
     <div class="grid" id="grid"></div>
 
@@ -60,8 +70,15 @@
         }
         next();
 
+        let id;
         function automatic() {
             id = setInterval(next, 300, () => clearInterval(id));
+        }
+
+        function stop() {
+            if (id) {
+                clearInterval(id);
+            }
         }
 
         const stageEl = document.getElementById("stage");
@@ -81,9 +98,9 @@
                     const cellEl = document.createElement("span");
                     cellEl.classList.add("cell");
                     if (cell) {
-                        cellEl.style.backgroundColor = "green";
+                        cellEl.classList.add("alive");
                     } else {
-                        cellEl.style.backgroundColor = "black";
+                        cellEl.classList.add("dead");
                     }
                     rowEl.appendChild(cellEl);
                 }

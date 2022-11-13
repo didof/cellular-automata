@@ -1,13 +1,10 @@
 package main
 
-import "sync"
-
 type NeighboursFinderI interface {
 	Find(index int) []int
 }
 
 type NeighboursFinder struct {
-	mu            sync.Mutex
 	width, height int
 }
 
@@ -16,8 +13,6 @@ func NewNeighboursFinder(width, height int) *NeighboursFinder {
 }
 
 func (n *NeighboursFinder) Find(index int) (nb []int) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
 	switch {
 	// corner cases
 	case n.topLeft(index):
