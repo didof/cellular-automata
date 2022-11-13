@@ -10,20 +10,23 @@ type Simulation interface {
 	Init(populationPercentage float64)
 	Process()
 	Exit() <-chan struct{}
+
 	Cells() []Cell
+	Sizes() (int, int)
 }
 
-// Default implementation
 type DefaultSimulation struct {
-	width, height int
-	Units         []Cell
+	width, height    int
+	Units            []Cell
+	neighboursFinder *NeighboursFinder
 }
 
 func NewSimulation(width, height int) Simulation {
 	return &DefaultSimulation{
-		width:  width,
-		height: height,
-		Units:  make([]Cell, width*height),
+		width:            width,
+		height:           height,
+		Units:            make([]Cell, width*height),
+		neighboursFinder: NewNeighboursFinder(width, height),
 	}
 }
 
@@ -34,7 +37,8 @@ func (s *DefaultSimulation) Init(populationPercentage float64) {
 	for x := 0; x < s.width; x++ {
 		for y := 0; y < s.height; y++ {
 			alive := rand.Float64() < populationPercentage
-			s.Units[n] = &SimpleCell{x: uint(x), y: uint(y), alive: alive}
+			s.Units[n] = &SimpleCell{x: x, y: y, alive: alive}
+			n++
 		}
 	}
 }
@@ -52,8 +56,34 @@ func (s *DefaultSimulation) Exit() <-chan struct{} {
 }
 
 func (s *DefaultSimulation) Process() {
+	for index, unit := range s.Units {
+		neighbours := s.neighboursFinder.Find(index)
+		var ncount int
+
+		for _, neighbour := range neighbours {
+			if s.Units[neighbour].Alive() {
+				ncount++
+			}
+		}
+
+		if unit.Alive() {
+			if ncount < 2 || ncount > 3 {
+				unit.Set(false)
+			}
+		} else {
+			if ncount == 3 {
+				unit.Set(true)
+			}
+		}
+
+		fmt.Println(neighbours)
+	}
 }
 
 func (s *DefaultSimulation) Cells() []Cell {
 	return s.Units
+}
+
+func (s *DefaultSimulation) Sizes() (width int, height int) {
+	return s.width, s.height
 }

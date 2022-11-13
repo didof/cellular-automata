@@ -26,7 +26,7 @@ func init() {
 	headless = flag.Bool("headless", false, "whether to run an headless simulation")
 	width = flag.Uint("width", 10, "the width of the simulation world")
 	height = flag.Uint("height", 10, "the height of the simulation world")
-	ipp = flag.Float64("ipp", 0.1, "initial population percentage")
+	ipp = flag.Float64("ipp", 0.3, "initial population percentage")
 	flag.Parse()
 }
 
@@ -40,7 +40,9 @@ func main() {
 	sim := NewSimulation(int(*width), int(*height))
 	sim.Init(*ipp)
 
-	server := NewBrowserSimulationServer("0.0.0.0", *port, *public, *HTMLfile, *headless)
+	// sim.Process()
+
+	server := NewBrowserSimulationServer(sim, "0.0.0.0", *port, *public, *HTMLfile, *headless)
 	server.AddTerminationSignals(os.Interrupt, syscall.SIGTERM)
-	server.Serve(sim)
+	server.Serve()
 }

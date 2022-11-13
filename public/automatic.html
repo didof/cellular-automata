@@ -9,13 +9,15 @@
 <body>
     <p>Generation <b id="stage">0</b></p>
 
+    <div id="grid"></div>
+
     <script type="text/javascript">
         let i = 0
         const id = setInterval(async () => {
             try {
                 const data = await fetch("/frame")
-                const text = await data.text()
-                console.log(text)
+                const json = await data.json()
+                console.log(json)
                 updateStage(i++)
             } catch(err) {
                 alert(err)
@@ -28,6 +30,10 @@
         const stageEl = document.getElementById("stage")
         function updateStage(i) {
             stageEl.textContent = i
+        }
+
+        function updateGrid() {
+        
         }
     </script>
 </body>

@@ -7,12 +7,12 @@ type Cell interface {
 }
 
 type SimpleCell struct {
-	x, y  uint
+	x, y  int
 	alive bool
 }
 
 func (c *SimpleCell) XY() (int, int) {
-	return int(c.x), int(c.y)
+	return c.x, c.y
 }
 
 func (c *SimpleCell) Alive() bool {
@@ -21,8 +21,4 @@ func (c *SimpleCell) Alive() bool {
 
 func (c *SimpleCell) Set(state bool) {
 	c.alive = state
-}
-
-func NewCell(x, y uint, alive bool) SimpleCell {
-	return SimpleCell{}
 }

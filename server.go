@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -26,9 +27,7 @@ type BrowserSimulationServer struct {
 	headless          bool
 }
 
-func (s *BrowserSimulationServer) Serve(sim Simulation) error {
-	s.sim = sim
-
+func (s *BrowserSimulationServer) Serve() error {
 	fmt.Printf("Started simulation server at http://%s\n", s.server.Addr)
 
 	if !s.headless {
@@ -50,34 +49,55 @@ func (s *BrowserSimulationServer) AddTerminationSignals(signals ...interface{}) 
 	}()
 }
 
-func NewBrowserSimulationServer(host string, port uint, publicPath string, HTMLfile string, headless bool) BrowserSimulationServer {
+func (s *BrowserSimulationServer) Handle(w http.ResponseWriter, r *http.Request) {
+	// s.sim.Process()
+
+	width, height := s.sim.Sizes()
+	grid := make([][]bool, height)
+
+	c := 0
+	cells := s.sim.Cells()
+
+	for i := 0; i < height; i++ {
+		grid[i] = make([]bool, width)
+		for j := 0; j < width; j++ {
+			grid[i][j] = cells[c].Alive()
+			c++
+		}
+	}
+
+	res, err := json.Marshal(grid)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.Write(res)
+}
+
+func NewBrowserSimulationServer(sim Simulation, host string, port uint, publicPath, HTMLfile string, headless bool) BrowserSimulationServer {
 	mux := http.NewServeMux()
+	server := &http.Server{
+		Addr:    host + ":" + strconv.Itoa(int(port)),
+		Handler: mux,
+	}
+
 	mux.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir(publicPath))))
 
 	templater := Templater{
 		publicPath: publicPath,
 		HTMLfile:   HTMLfile,
 	}
-
 	mux.HandleFunc("/", templater.Handle)
 
-	framer := Framer{
-		frame: "TODO",
-	}
-
-	mux.HandleFunc("/frame", framer.Handle)
-
-	server := &http.Server{
-		Addr:    host + ":" + strconv.Itoa(int(port)),
-		Handler: mux,
-	}
-
-	return BrowserSimulationServer{
-		sim:               nil,
+	s := BrowserSimulationServer{
+		sim:               sim,
 		server:            server,
 		terminationSignal: make(chan os.Signal),
 		headless:          headless,
 	}
+	mux.HandleFunc("/frame", s.Handle)
+
+	return s
 }
 
 type Templater struct {
@@ -91,14 +111,6 @@ func (t *Templater) Handle(w http.ResponseWriter, r *http.Request) {
 	} else {
 		tmpl.Execute(w, nil)
 	}
-}
-
-type Framer struct {
-	frame string
-}
-
-func (f *Framer) Handle(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(f.frame))
 }
 
 func open(url string) {
