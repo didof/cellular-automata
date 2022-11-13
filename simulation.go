@@ -75,8 +75,6 @@ func (s *DefaultSimulation) Process() {
 				unit.Set(true)
 			}
 		}
-
-		fmt.Println(neighbours)
 	}
 }
 

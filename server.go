@@ -50,7 +50,7 @@ func (s *BrowserSimulationServer) AddTerminationSignals(signals ...interface{}) 
 }
 
 func (s *BrowserSimulationServer) Handle(w http.ResponseWriter, r *http.Request) {
-	// s.sim.Process()
+	s.sim.Process()
 
 	width, height := s.sim.Sizes()
 	grid := make([][]bool, height)

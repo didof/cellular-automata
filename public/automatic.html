@@ -1,40 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulation (automatic)</title>
+
+    <style>
+        body {
+            background-color: black;
+            color: greenyellow;
+        }
+
+        .grid {
+            margin-top: 1rem;
+            margin-inline: auto;
+            width: 100%;
+            height: 100%;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: nowrap;
+            width: 100%;
+            height: 100%;
+        }
+
+        .cell {
+            display: inline-block;
+            flex-grow: 1;
+            aspect-ratio: 1 / 1;
+        }
+    </style>
 </head>
+
 <body>
     <p>Generation <b id="stage">0</b></p>
 
-    <div id="grid"></div>
+    <button onclick="next()">next</button>
+    <button onclick="automatic()">automatic</button>
+
+    <div class="grid" id="grid"></div>
 
     <script type="text/javascript">
-        let i = 0
-        const id = setInterval(async () => {
+        let generation = 0;
+
+        async function next(cleanup) {
             try {
-                const data = await fetch("/frame")
-                const json = await data.json()
-                console.log(json)
-                updateStage(i++)
-            } catch(err) {
-                alert(err)
-                clearInterval(id)
-                return
+                const data = await fetch("/frame");
+                const json = await data.json();
+                updateGrid(json);
+                updateStage();
+            } catch (err) {
+                alert(err);
+                cleanup();
+                return;
             }
-        }, 1000)
+        }
+        next();
 
-
-        const stageEl = document.getElementById("stage")
-        function updateStage(i) {
-            stageEl.textContent = i
+        function automatic() {
+            id = setInterval(next, 300, () => clearInterval(id));
         }
 
-        function updateGrid() {
-        
+        const stageEl = document.getElementById("stage");
+        function updateStage() {
+            stageEl.textContent = generation++;
+        }
+
+        let gridEl = document.getElementById("grid");
+        function updateGrid(grid) {
+            const newGridEl = document.createDocumentFragment();
+
+            for (const row of grid) {
+                const rowEl = document.createElement("div");
+                rowEl.classList.add("row");
+
+                for (const cell of row) {
+                    const cellEl = document.createElement("span");
+                    cellEl.classList.add("cell");
+                    if (cell) {
+                        cellEl.style.backgroundColor = "green";
+                    } else {
+                        cellEl.style.backgroundColor = "black";
+                    }
+                    rowEl.appendChild(cellEl);
+                }
+
+                newGridEl.appendChild(rowEl);
+            }
+
+            while (gridEl.lastChild) {
+                gridEl.removeChild(gridEl.lastChild);
+            }
+            gridEl.appendChild(newGridEl);
         }
     </script>
 </body>
+
 </html>
