@@ -20,9 +20,9 @@ type SimulationServer interface {
 
 type BrowserSimulationServer struct {
 	sim               Simulation
+	server            *http.Server
 	terminationSignal chan os.Signal
 	headless          bool
-	server            *http.Server
 }
 
 func (s *BrowserSimulationServer) Serve(sim Simulation) error {
@@ -54,6 +54,12 @@ func NewBrowserSimulationServer(host string, port uint, publicPath string, headl
 	mux.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir(publicPath))))
 	mux.HandleFunc("/", handleIndex)
 
+	framer := Framer{
+		frame: "TODO",
+	}
+
+	mux.HandleFunc("/frame", framer.Handle)
+
 	server := &http.Server{
 		Addr:    host + ":" + strconv.Itoa(int(port)),
 		Handler: mux,
@@ -61,9 +67,9 @@ func NewBrowserSimulationServer(host string, port uint, publicPath string, headl
 
 	return BrowserSimulationServer{
 		sim:               nil,
+		server:            server,
 		terminationSignal: make(chan os.Signal),
 		headless:          headless,
-		server:            server,
 	}
 }
 
@@ -74,6 +80,14 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	t.Execute(w, nil)
+}
+
+type Framer struct {
+	frame string
+}
+
+func (f *Framer) Handle(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(f.frame))
 }
 
 func open(url string) {
